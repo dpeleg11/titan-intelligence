@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Titan — Early Signal Engine</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background:#0A0F1E; color:#E2E8F0; min-height:100vh; }
+
+  /* Layout */
+  .app { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
+  .sidebar { background:#0D1526; border-right:1px solid #1E293B; padding:24px 16px; display:flex; flex-direction:column; gap:8px; }
+  .main { padding:24px; overflow-y:auto; }
+
+  /* Logo */
+  .logo { font-size:22px; font-weight:900; color:#3B82F6; letter-spacing:-0.05em; margin-bottom:24px; padding:0 8px; }
+  .logo span { color:#64748B; font-size:11px; font-weight:500; display:block; letter-spacing:0.05em; margin-top:2px; }
+
+  /* Nav */
+  .nav-item { padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:500; color:#64748B; display:flex; align-items:center; gap:10px; transition:all 0.15s; border:none; background:none; width:100%; text-align:left; }
+  .nav-item:hover { background:#1E293B; color:#CBD5E1; }
+  .nav-item.active { background:#1E3A5F; color:#60A5FA; }
+  .nav-item .icon { width:16px; text-align:center; }
+
+  /* Settings panel */
+  .settings-block { margin-top:auto; padding:12px; background:#1E293B; border-radius:12px; }
+  .settings-block label { font-size:10px; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px; }
+  .settings-block input { width:100%; padding:7px 10px; background:#0D1526; border:1px solid #334155; border-radius:8px; color:#E2E8F0; font-size:11px; font-family:monospace; }
+  .settings-block input:focus { outline:none; border-color:#3B82F6; }
+
+  /* Header */
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+  .header-left h1 { font-size:22px; font-weight:800; color:#F1F5F9; }
+  .header-left p { font-size:12px; color:#64748B; margin-top:3px; }
+  .scan-btn { padding:10px 20px; background:#3B82F6; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all 0.15s; }
+  .scan-btn:hover { background:#2563EB; }
+  .scan-btn:disabled { background:#1E3A5F; color:#64748B; cursor:not-allowed; }
+  .scan-btn .spinner { width:14px; height:14px; border:2px solid #ffffff40; border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Stats row */
+  .stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+  .stat-card { background:#0D1526; border:1px solid #1E293B; border-radius:12px; padding:14px 16px; }
+  .stat-card .label { font-size:10px; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+  .stat-card .value { font-size:24px; font-weight:900; color:#F1F5F9; }
+  .stat-card .sub { font-size:11px; color:#64748B; margin-top:3px; }
+
+  /* Filters */
+  .filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .filter-btn { padding:5px 14px; border-radius:20px; border:1px solid #1E293B; background:none; color:#64748B; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .filter-btn:hover { border-color:#3B82F6; color:#60A5FA; }
+  .filter-btn.active { background:#1E3A5F; border-color:#3B82F6; color:#60A5FA; }
+  .search-box { padding:6px 12px; background:#0D1526; border:1px solid #1E293B; border-radius:20px; color:#E2E8F0; font-size:12px; width:180px; }
+  .search-box:focus { outline:none; border-color:#3B82F6; }
+  .filter-spacer { flex:1; }
+
+  /* Table */
+  .table-wrap { background:#0D1526; border:1px solid #1E293B; border-radius:16px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:#111827; }
+  th { padding:12px 16px; text-align:left; font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  th.right { text-align:right; }
+  td { padding:12px 16px; font-size:13px; border-bottom:1px solid #1E293B; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#111827; cursor:pointer; }
+
+  /* Score bar */
+  .score-cell { display:flex; align-items:center; gap:10px; }
+  .score-num { font-size:18px; font-weight:900; width:32px; text-align:right; flex-shrink:0; }
+  .score-bar-wrap { flex:1; height:6px; background:#1E293B; border-radius:3px; overflow:hidden; min-width:80px; }
+  .score-bar { height:100%; border-radius:3px; transition:width 0.5s ease; }
+
+  /* Signal badges */
+  .signals { display:flex; gap:4px; flex-wrap:wrap; }
+  .sig { padding:2px 7px; border-radius:10px; font-size:10px; font-weight:700; white-space:nowrap; }
+  .sig-quant { background:#1E3A5F; color:#60A5FA; }
+  .sig-options { background:#1A2E1A; color:#4ADE80; }
+  .sig-insider { background:#2D1B1B; color:#F87171; }
+  .sig-analyst { background:#2D2A1B; color:#FBBF24; }
+  .sig-reversal { background:#1E1B2E; color:#A78BFA; }
+
+  /* Ticker cell */
+  .ticker-cell { display:flex; flex-direction:column; }
+  .ticker-sym { font-size:15px; font-weight:800; color:#F1F5F9; }
+  .ticker-name { font-size:11px; color:#64748B; margin-top:1px; }
+
+  /* Change */
+  .pos { color:#4ADE80; }
+  .neg { color:#F87171; }
+  .neu { color:#94A3B8; }
+
+  /* Detail panel */
+  .detail-overlay { position:fixed; inset:0; background:#000000AA; z-index:100; display:none; }
+  .detail-overlay.open { display:block; }
+  .detail-panel { position:fixed; right:0; top:0; height:100%; width:480px; background:#0D1526; border-left:1px solid #1E293B; padding:0; overflow-y:auto; transform:translateX(100%); transition:transform 0.25s ease; }
+  .detail-overlay.open .detail-panel { transform:translateX(0); }
+  .detail-header { padding:24px; border-bottom:1px solid #1E293B; display:flex; justify-content:space-between; align-items:start; }
+  .detail-close { background:none; border:none; color:#64748B; font-size:20px; cursor:pointer; padding:4px; }
+  .detail-close:hover { color:#F1F5F9; }
+  .detail-body { padding:24px; }
+  .detail-section { margin-bottom:20px; }
+  .detail-section h3 { font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; }
+  .detail-metric { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #1E293B; }
+  .detail-metric:last-child { border:none; }
+  .detail-metric .dm-label { font-size:12px; color:#94A3B8; }
+  .detail-metric .dm-value { font-size:13px; font-weight:700; color:#F1F5F9; }
+
+  /* AI narrative */
+  .ai-box { background:#111827; border:1px solid #1E3A5F; border-radius:12px; padding:16px; }
+  .ai-box .ai-label { font-size:10px; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px; }
+  .ai-box .ai-text { font-size:13px; color:#CBD5E1; line-height:1.7; }
+  .ai-box .ai-loading { color:#64748B; font-size:13px; display:flex; align-items:center; gap:8px; }
+
+  /* Signal detail rows */
+  .sig-row { display:flex; align-items:start; gap:12px; padding:10px 0; border-bottom:1px solid #1E293B; }
+  .sig-row:last-child { border:none; }
+  .sig-icon { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .sig-detail { flex:1; }
+  .sig-title { font-size:12px; font-weight:700; color:#F1F5F9; }
+  .sig-desc { font-size:11px; color:#64748B; margin-top:2px; line-height:1.5; }
+  .sig-weight { font-size:12px; font-weight:800; }
+
+  /* Empty state */
+  .empty { text-align:center; padding:80px 40px; color:#475569; }
+  .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-title { font-size:18px; font-weight:700; color:#64748B; margin-bottom:8px; }
+  .empty-sub { font-size:13px; line-height:1.6; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:24px; right:24px; background:#1E293B; color:#F1F5F9; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:999; border:1px solid #334155; opacity:0; transition:opacity 0.3s; }
+  .toast.show { opacity:1; }
+
+  /* Tabs inside detail */
+  .detail-tabs { display:flex; gap:4px; padding:16px 24px 0; }
+  .detail-tab { padding:7px 16px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:none; background:none; color:#64748B; }
+  .detail-tab.active { background:#1E3A5F; color:#60A5FA; }
+
+  /* Sector tag */
+  .sector-tag { font-size:10px; color:#64748B; background:#1E293B; padding:2px 8px; border-radius:10px; }
+
+  /* Last scan */
+  .last-scan { font-size:11px; color:#475569; }
+
+  /* Alert strip */
+  .alert-strip { background:#1A2E1A; border:1px solid #166534; border-radius:10px; padding:10px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; font-size:12px; color:#4ADE80; display:none; }
+  .alert-strip.show { display:flex; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">TITAN <span>EARLY SIGNAL ENGINE</span></div>
+
+    <button class="nav-item active" onclick="setView('scanner')">
+      <span class="icon">T</span> Scanner
+    </button>
+    <button class="nav-item" onclick="setView('alerts')">
+      <span class="icon">!</span> Alerts
+    </button>
+    <button class="nav-item" onclick="setView('watchlist')">
+      <span class="icon">W</span> Watchlist
+    </button>
+    <button class="nav-item" onclick="setView('settings')">
+      <span class="icon">S</span> Settings
+    </button>
+
+    <div class="settings-block">
+      <label>Finnhub API Key</label>
+      <input type="password" id="finnhub-key" placeholder="Enter key..." onchange="saveKey('finnhub', this.value)">
+      <label style="margin-top:10px">Unusual Whales Key</label>
+      <input type="password" id="uw-key" placeholder="Coming soon..." onchange="saveKey('uw', this.value)">
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main-content">
+    <!-- Scanner view injected here -->
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-tabs">
+      <button class="detail-tab active" onclick="setDetailTab('signals')">Signals</button>
+      <button class="detail-tab" onclick="setDetailTab('metrics')">Metrics</button>
+      <button class="detail-tab" onclick="setDetailTab('ai')">AI Narrative</button>
+    </div>
+    <div class="detail-header">
+      <div>
+        <div class="ticker-sym" id="d-ticker" style="font-size:24px"></div>
+        <div class="ticker-name" id="d-name"></div>
+      </div>
+      <button class="detail-close" onclick="closeDetail()">x</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let results = [];
+let filtered = [];
+let activeFilter = 'all';
+let detailTicker = null;
+let detailTabActive = 'signals';
+let lastScan = null;
+let scanning = false;
+let watchlist = JSON.parse(localStorage.getItem('titan_wl') || '[]');
+let alerts = JSON.parse(localStorage.getItem('titan_alerts') || '[]');
+
+// ── Titan Universe ────────────────────────────────────────────────────────────
+const UNIVERSE = [
+  // Semis
+  {ticker:'NVDA',name:'Nvidia',sector:'Semis'},
+  {ticker:'AMD',name:'Advanced Micro Devices',sector:'Semis'},
+  {ticker:'AVGO',name:'Broadcom',sector:'Semis'},
+  {ticker:'ASML',name:'ASML Holding',sector:'Semis'},
+  {ticker:'MU',name:'Micron Technology',sector:'Memory'},
+  {ticker:'SNDK',name:'SanDisk',sector:'Memory'},
+  {ticker:'LRCX',name:'Lam Research',sector:'Semi Equip'},
+  {ticker:'AMAT',name:'Applied Materials',sector:'Semi Equip'},
+  {ticker:'KLAC',name:'KLA Corp',sector:'Semi Equip'},
+  {ticker:'MRVL',name:'Marvell Technology',sector:'Semis'},
+  {ticker:'QCOM',name:'Qualcomm',sector:'Semis'},
+  {ticker:'TSM',name:'TSMC',sector:'Semis'},
+  {ticker:'INTC',name:'Intel',sector:'Semis'},
+  {ticker:'TXN',name:'Texas Instruments',sector:'Semis'},
+  {ticker:'ADI',name:'Analog Devices',sector:'Semis'},
+  {ticker:'ONTO',name:'Onto Innovation',sector:'Semi Equip'},
+  {ticker:'ACLS',name:'Axcelis Technologies',sector:'Semi Equip'},
+  {ticker:'ENTG',name:'Entegris',sector:'Semi Equip'},
+  {ticker:'MKSI',name:'MKS Instruments',sector:'Semi Equip'},
+  // AI Infrastructure
+  {ticker:'GEV',name:'GE Vernova',sector:'AI Power'},
+  {ticker:'HWM',name:'Howmet Aerospace',sector:'AI Power'},
+  {ticker:'FIX',name:'Comfort Systems',sector:'AI Infra'},
+  {ticker:'STRL',name:'Sterling Infrastructure',sector:'AI Infra'},
+  {ticker:'TTMI',name:'TTM Technologies',sector:'AI Infra'},
+  {ticker:'GLW',name:'Corning',sector:'AI Infra'},
+  {ticker:'VRT',name:'Vertiv Holdings',sector:'AI Power'},
+  {ticker:'EATON',name:'Eaton Corp',sector:'AI Power'},
+  {ticker:'PWR',name:'Quanta Services',sector:'AI Infra'},
+  {ticker:'POWL',name:'Powell Industries',sector:'AI Power'},
+  {ticker:'NVEE',name:'NV5 Global',sector:'AI Infra'},
+  // Cloud & Software
+  {ticker:'MSFT',name:'Microsoft',sector:'Cloud'},
+  {ticker:'AMZN',name:'Amazon',sector:'Cloud'},
+  {ticker:'GOOG',name:'Alphabet',sector:'Cloud'},
+  {ticker:'META',name:'Meta Platforms',sector:'Cloud'},
+  {ticker:'ORCL',name:'Oracle',sector:'Cloud'},
+  {ticker:'NOW',name:'ServiceNow',sector:'Software'},
+  {ticker:'CRM',name:'Salesforce',sector:'Software'},
+  {ticker:'PLTR',name:'Palantir',sector:'AI Software'},
+  {ticker:'ZETA',name:'Zeta Global',sector:'AI Software'},
+  {ticker:'AI',name:'C3.ai',sector:'AI Software'},
+  {ticker:'BBAI',name:'BigBear.ai',sector:'AI Software'},
+  {ticker:'SOUN',name:'SoundHound AI',sector:'AI Software'},
+  {ticker:'CRWD',name:'CrowdStrike',sector:'Cybersecurity'},
+  {ticker:'S',name:'SentinelOne',sector:'Cybersecurity'},
+  {ticker:'PANW',name:'Palo Alto Networks',sector:'Cybersecurity'},
+  {ticker:'ZS',name:'Zscaler',sector:'Cybersecurity'},
+  // Space & Defense
+  {ticker:'SPCX',name:'SpaceX',sector:'Space'},
+  {ticker:'RKLB',name:'Rocket Lab',sector:'Space'},
+  {ticker:'ASTS',name:'AST SpaceMobile',sector:'Space'},
+  {ticker:'KTOS',name:'Kratos Defense',sector:'Defense'},
+  {ticker:'LHX',name:'L3Harris Technologies',sector:'Defense'},
+  {ticker:'NOC',name:'Northrop Grumman',sector:'Defense'},
+  {ticker:'RTX',name:'RTX Corp',sector:'Defense'},
+  // Energy
+  {ticker:'CEG',name:'Constellation Energy',sector:'Nuclear'},
+  {ticker:'VST',name:'Vistra Energy',sector:'Nuclear'},
+  {ticker:'SMR',name:'NuScale Power',sector:'Nuclear'},
+  {ticker:'OKLO',name:'Oklo',sector:'Nuclear'},
+  {ticker:'VNOM',name:'Viper Energy',sector:'Oil Royalty'},
+  {ticker:'FANG',name:'Diamondback Energy',sector:'Energy'},
+];
+
+const SECTORS = [...new Set(UNIVERSE.map(u => u.sector))].sort();
+
+// ── Signal Weights ────────────────────────────────────────────────────────────
+const WEIGHTS = { quant:30, options:20, insider:20, analyst:15, reversal:15 };
+
+// ── Finnhub helpers ───────────────────────────────────────────────────────────
+function getKey(k) { return localStorage.getItem('titan_key_'+k)||''; }
+function saveKey(k,v) { localStorage.setItem('titan_key_'+k,v); toast('Key saved'); }
+
+async function finnhub(endpoint) {
+  const key = getKey('finnhub');
+  if (!key) return null;
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/${endpoint}&token=${key}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function getQuote(ticker) {
+  return await finnhub(`quote?symbol=${ticker}`);
+}
+
+async function getCandles(ticker) {
+  const to = Math.floor(Date.now()/1000);
+  const from = to - 86400*90; // 90 days
+  return await finnhub(`stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${to}`);
+}
+
+async function getInsider(ticker) {
+  return await finnhub(`stock/insider-transactions?symbol=${ticker}`);
+}
+
+async function getRecommendations(ticker) {
+  return await finnhub(`stock/recommendation?symbol=${ticker}`);
+}
+
+// ── Signal Scorers ────────────────────────────────────────────────────────────
+function scoreReversal(candles) {
+  // Checks if price is near 52-week low AND has bounced on high volume
+  if (!candles || !candles.c || candles.c.length < 20) return {score:0, detail:'No data'};
+  const closes = candles.c;
+  const volumes = candles.v || [];
+  const low52 = Math.min(...closes);
+  const high52 = Math.max(...closes);
+  const current = closes[closes.length-1];
+  const range = high52 - low52;
+  const posInRange = range > 0 ? (current - low52) / range : 0.5;
+  // Near 52-week low = bottom 25%
+  const nearLow = posInRange < 0.25;
+  // Recent volume spike = last 5 days avg vs 20-day avg
+  const recentVol = volumes.slice(-5).reduce((s,v)=>s+v,0)/5;
+  const avgVol = volumes.slice(-20).reduce((s,v)=>s+v,0)/20;
+  const volSpike = avgVol > 0 ? recentVol/avgVol : 1;
+  // Price bouncing = last 5 days up
+  const recentClose = closes.slice(-5);
+  const bouncing = recentClose[recentClose.length-1] > recentClose[0];
+  let score = 0;
+  const signals = [];
+  if (nearLow) { score += 50; signals.push('Near 52wk low'); }
+  if (volSpike > 1.5) { score += 30; signals.push(`Volume ${volSpike.toFixed(1)}x avg`); }
+  if (bouncing && nearLow) { score += 20; signals.push('Bouncing from low'); }
+  return {
+    score: Math.min(100, score),
+    detail: signals.join(' + ') || 'No reversal pattern',
+    posInRange: (posInRange*100).toFixed(0),
+    low52: low52.toFixed(2),
+    high52: high52.toFixed(2),
+    current: current.toFixed(2),
+  };
+}
+
+function scoreInsider(data) {
+  // Count recent buys vs sells in last 90 days
+  if (!data || !data.data) return {score:0, detail:'No data', buyers:0};
+  const cutoff = Date.now() - 90*86400000;
+  const recent = data.data.filter(t => new Date(t.transactionDate).getTime() > cutoff);
+  const buys = recent.filter(t => t.change > 0);
+  const sells = recent.filter(t => t.change < 0);
+  const buyers = [...new Set(buys.map(t => t.name))].length;
+  const totalBuyValue = buys.reduce((s,t) => s + Math.abs(t.transactionPrice * t.change), 0);
+  let score = 0;
+  const signals = [];
+  if (buyers >= 3) { score += 60; signals.push(`${buyers} insiders buying`); }
+  else if (buyers >= 2) { score += 35; signals.push(`${buyers} insiders buying`); }
+  else if (buyers >= 1) { score += 15; signals.push(`${buyers} insider buying`); }
+  if (sells.length === 0 && buyers > 0) { score += 20; signals.push('No insider selling'); }
+  if (totalBuyValue > 1000000) { score += 20; signals.push(`$${(totalBuyValue/1000000).toFixed(1)}M bought`); }
+  return {
+    score: Math.min(100, score),
+    detail: signals.join(' + ') || 'No insider activity',
+    buyers, sells: sells.length,
+    totalBuyValue: totalBuyValue.toFixed(0),
+  };
+}
+
+function scoreAnalyst(recs) {
+  // Strong Buy consensus + recent upgrades
+  if (!recs || !recs.length) return {score:0, detail:'No data'};
+  const latest = recs[0];
+  if (!latest) return {score:0, detail:'No data'};
+  const { strongBuy=0, buy=0, hold=0, sell=0, strongSell=0 } = latest;
+  const total = strongBuy+buy+hold+sell+strongSell;
+  if (total === 0) return {score:0, detail:'No coverage'};
+  const bullPct = (strongBuy+buy)/total;
+  let score = 0;
+  const signals = [];
+  if (bullPct > 0.75) { score += 60; signals.push(`${Math.round(bullPct*100)}% Buy/Strong Buy`); }
+  else if (bullPct > 0.5) { score += 35; signals.push(`${Math.round(bullPct*100)}% Buy/Strong Buy`); }
+  // Check for recent trend (last 2 periods)
+  if (recs.length >= 2) {
+    const prev = recs[1];
+    const prevBull = (prev.strongBuy+prev.buy)/(prev.strongBuy+prev.buy+prev.hold+prev.sell+prev.strongSell);
+    if (bullPct > prevBull + 0.05) { score += 25; signals.push('Analyst upgrades trend'); }
+    if (latest.strongBuy > prev.strongBuy) { score += 15; signals.push(`Strong Buy count rising`); }
+  }
+  return {
+    score: Math.min(100, score),
+    detail: signals.join(' + ') || `${Math.round(bullPct*100)}% bullish`,
+    strongBuy, buy, hold, sell, strongSell, total,
+  };
+}
+
+// ── Main Scan ─────────────────────────────────────────────────────────────────
+async function runScan() {
+  if (scanning) return;
+  const key = getKey('finnhub');
+  if (!key) { toast('Enter your Finnhub API key first'); return; }
+
+  scanning = true;
+  results = [];
+  renderScanner();
+
+  const btn = document.getElementById('scan-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Scanning...'; }
+
+  const status = document.getElementById('scan-status');
+
+  // Scan in batches of 3 to respect rate limits
+  for (let i = 0; i < UNIVERSE.length; i += 3) {
+    const batch = UNIVERSE.slice(i, i+3);
+    if (status) status.textContent = `Scanning ${i+1}-${Math.min(i+3,UNIVERSE.length)} of ${UNIVERSE.length}...`;
+
+    await Promise.all(batch.map(async stock => {
+      try {
+        const [quote, candles, insider, recs] = await Promise.all([
+          getQuote(stock.ticker),
+          getCandles(stock.ticker),
+          getInsider(stock.ticker),
+          getRecommendations(stock.ticker),
+        ]);
+
+        if (!quote || !quote.c) return;
+
+        const reversalSig  = scoreReversal(candles);
+        const insiderSig   = scoreInsider(insider);
+        const analystSig   = scoreAnalyst(recs);
+
+        // Quant and options scores — seeded from known data, UW will replace
+        // For now use reversal + analyst as proxy until UW connected
+        const quantScore  = Math.min(100, reversalSig.score * 0.6 + analystSig.score * 0.4);
+        const optionsScore = 0; // UW pending
+
+        const titanScore = Math.round(
+          quantScore   * (WEIGHTS.quant/100) +
+          optionsScore * (WEIGHTS.options/100) +
+          insiderSig.score * (WEIGHTS.insider/100) +
+          analystSig.score * (WEIGHTS.analyst/100) +
+          reversalSig.score * (WEIGHTS.reversal/100)
+        );
+
+        const signals = [];
+        if (quantScore > 40)       signals.push({type:'quant',   label:'Quant' + (quantScore>70?'+':''), score:quantScore});
+        if (insiderSig.score > 20) signals.push({type:'insider', label:'Insider x'+insiderSig.buyers, score:insiderSig.score});
+        if (analystSig.score > 30) signals.push({type:'analyst', label:'Analyst', score:analystSig.score});
+        if (reversalSig.score > 30)signals.push({type:'reversal',label:'Reversal', score:reversalSig.score});
+
+        results.push({
+          ...stock,
+          titanScore,
+          price: quote.c,
+          change: quote.dp,
+          changeDol: quote.d,
+          signals,
+          quantScore,
+          optionsScore,
+          insiderSig,
+          analystSig,
+          reversalSig,
+          scannedAt: new Date().toISOString(),
+        });
+      } catch(e) { /* skip failed tickers */ }
+    }));
+
+    // Rate limit pause
+    if (i + 3 < UNIVERSE.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  results.sort((a,b) => b.titanScore - a.titanScore);
+  lastScan = new Date();
+  scanning = false;
+
+  // Check for new alerts (score > 70)
+  const newAlerts = results.filter(r => r.titanScore > 70 && !alerts.find(a => a.ticker===r.ticker));
+  newAlerts.forEach(r => alerts.unshift({ticker:r.ticker, score:r.titanScore, date:new Date().toISOString()}));
+  localStorage.setItem('titan_alerts', JSON.stringify(alerts.slice(0,50)));
+
+  applyFilter(activeFilter);
+  renderScanner();
+  toast(`Scan complete — ${results.length} stocks analyzed`);
+}
+
+// ── Filter & Render ───────────────────────────────────────────────────────────
+function applyFilter(filter) {
+  activeFilter = filter;
+  const search = document.getElementById('search-input')?.value?.toLowerCase()||'';
+  filtered = results.filter(r => {
+    const matchSearch = !search || r.ticker.toLowerCase().includes(search) || r.name.toLowerCase().includes(search);
+    const matchFilter = filter==='all' || r.sector===filter ||
+      (filter==='strong' && r.titanScore>=70) ||
+      (filter==='watchlist' && watchlist.includes(r.ticker));
+    return matchSearch && matchFilter;
+  });
+}
+
+function scoreColor(s) {
+  if (s >= 75) return '#4ADE80';
+  if (s >= 55) return '#FBBF24';
+  if (s >= 35) return '#F97316';
+  return '#64748B';
+}
+
+function renderScanner() {
+  const el = document.getElementById('main-content');
+  if (!el) return;
+
+  const alerts70 = results.filter(r => r.titanScore >= 70);
+
+  el.innerHTML = `
+    <div class="header">
+      <div class="header-left">
+        <h1>Titan Scanner</h1>
+        <p class="last-scan">${lastScan ? 'Last scan: '+lastScan.toLocaleTimeString() : 'No scan yet — enter Finnhub key and scan'}</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span id="scan-status" style="font-size:12px;color:#64748B"></span>
+        <button class="scan-btn" id="scan-btn" onclick="runScan()">
+          ${scanning ? '<div class="spinner"></div> Scanning...' : 'Run Scan'}
+        </button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Universe</div>
+        <div class="value">${UNIVERSE.length}</div>
+        <div class="sub">stocks tracked</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Scanned</div>
+        <div class="value">${results.length}</div>
+        <div class="sub">with live data</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">High Signal</div>
+        <div class="value" style="color:#4ADE80">${results.filter(r=>r.titanScore>=70).length}</div>
+        <div class="sub">score above 70</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Insider Activity</div>
+        <div class="value" style="color:#F87171">${results.filter(r=>r.insiderSig&&r.insiderSig.buyers>0).length}</div>
+        <div class="sub">with buyers</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Options Flow</div>
+        <div class="value" style="color:#A78BFA">--</div>
+        <div class="sub">UW pending</div>
+      </div>
+    </div>
+
+    ${alerts70.length > 0 ? `
+    <div class="alert-strip show">
+      !! ${alerts70.length} name${alerts70.length>1?'s':''} above Titan Score 70:
+      ${alerts70.slice(0,5).map(r=>`<strong>${r.ticker} (${r.titanScore})</strong>`).join(', ')}
+    </div>` : ''}
+
+    <div class="filters">
+      ${['all','strong','watchlist',...SECTORS].map(f=>`
+        <button class="filter-btn ${activeFilter===f?'active':''}" onclick="applyFilter('${f}');renderScanner()">
+          ${f==='all'?'All':f==='strong'?'Score 70+':f==='watchlist'?'My Watchlist':f}
+        </button>`).join('')}
+      <div class="filter-spacer"></div>
+      <input class="search-box" id="search-input" placeholder="Search ticker or name..." oninput="applyFilter('${activeFilter}');renderScanner()">
+    </div>
+
+    ${filtered.length === 0 ? `
+    <div class="empty">
+      <div class="empty-icon">T</div>
+      <div class="empty-title">${results.length === 0 ? 'Ready to scan' : 'No results'}</div>
+      <div class="empty-sub">${results.length === 0 ?
+        'Enter your Finnhub API key in the sidebar and click Run Scan.' :
+        'Try a different filter or search term.'}</div>
+    </div>` : `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Titan Score</th>
+            <th>Ticker</th>
+            <th>Sector</th>
+            <th class="right">Price</th>
+            <th class="right">Change</th>
+            <th>Signals</th>
+            <th class="right">Insider</th>
+            <th class="right">Analyst</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(r => `
+          <tr onclick="openDetail('${r.ticker}')">
+            <td>
+              <div class="score-cell">
+                <div class="score-num" style="color:${scoreColor(r.titanScore)}">${r.titanScore}</div>
+                <div class="score-bar-wrap">
+                  <div class="score-bar" style="width:${r.titanScore}%;background:${scoreColor(r.titanScore)}"></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="ticker-cell">
+                <div class="ticker-sym">${r.ticker}</div>
+                <div class="ticker-name">${r.name}</div>
+              </div>
+            </td>
+            <td><span class="sector-tag">${r.sector}</span></td>
+            <td class="right" style="font-weight:700">$${r.price?.toFixed(2)||'--'}</td>
+            <td class="right ${r.change>=0?'pos':r.change<0?'neg':'neu'}">${r.change!=null?(r.change>=0?'+':'')+r.change.toFixed(2)+'%':'--'}</td>
+            <td>
+              <div class="signals">
+                ${r.signals.map(s=>`<span class="sig sig-${s.type}">${s.label}</span>`).join('')}
+                ${r.signals.length===0?'<span style="color:#475569;font-size:11px">No signals</span>':''}
+              </div>
+            </td>
+            <td class="right" style="color:${r.insiderSig?.buyers>0?'#F87171':'#475569'}">${r.insiderSig?.buyers>0?r.insiderSig.buyers+' buyer'+( r.insiderSig.buyers>1?'s':''):'--'}</td>
+            <td class="right" style="color:${r.analystSig?.score>50?'#4ADE80':'#475569'}">${r.analystSig?.detail?.split('+')[0]?.trim()||'--'}</td>
+            <td>
+              <button onclick="event.stopPropagation();toggleWatchlist('${r.ticker}')" style="background:none;border:1px solid ${watchlist.includes(r.ticker)?'#3B82F6':'#1E293B'};color:${watchlist.includes(r.ticker)?'#60A5FA':'#475569'};border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer">
+                ${watchlist.includes(r.ticker)?'Watching':'+ Watch'}
+              </button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  `;
+}
+
+// ── Detail Panel ──────────────────────────────────────────────────────────────
+function openDetail(ticker) {
+  detailTicker = ticker;
+  const r = results.find(x => x.ticker===ticker);
+  if (!r) return;
+  document.getElementById('d-ticker').textContent = r.ticker;
+  document.getElementById('d-name').textContent = r.name + ' · ' + r.sector;
+  document.getElementById('detail-overlay').classList.add('open');
+  renderDetailBody(r);
+}
+
+function renderDetailBody(r) {
+  const body = document.getElementById('detail-body');
+  if (!body) return;
+
+  if (detailTabActive === 'signals') {
+    const sigRows = [
+      {
+        type:'quant', icon:'Q', label:'Quant Momentum',
+        score: r.quantScore,
+        desc: r.reversalSig?.detail || 'Price + volume analysis',
+        weight: WEIGHTS.quant,
+        color:'#60A5FA', bg:'#1E3A5F',
+      },
+      {
+        type:'options', icon:'O', label:'Options Flow',
+        score: 0,
+        desc: 'Unusual Whales API key required',
+        weight: WEIGHTS.options,
+        color:'#4ADE80', bg:'#1A2E1A',
+      },
+      {
+        type:'insider', icon:'I', label:'Insider Buying',
+        score: r.insiderSig?.score||0,
+        desc: r.insiderSig?.detail || 'No recent activity',
+        weight: WEIGHTS.insider,
+        color:'#F87171', bg:'#2D1B1B',
+      },
+      {
+        type:'analyst', icon:'A', label:'Analyst Consensus',
+        score: r.analystSig?.score||0,
+        desc: r.analystSig?.detail || 'No data',
+        weight: WEIGHTS.analyst,
+        color:'#FBBF24', bg:'#2D2A1B',
+      },
+      {
+        type:'reversal', icon:'R', label:'52-Week Reversal',
+        score: r.reversalSig?.score||0,
+        desc: r.reversalSig ? `Position in range: ${r.reversalSig.posInRange}% (Low: $${r.reversalSig.low52} / High: $${r.reversalSig.high52})` : 'No data',
+        weight: WEIGHTS.reversal,
+        color:'#A78BFA', bg:'#1E1B2E',
+      },
+    ];
+
+    body.innerHTML = `
+      <div class="detail-section">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+          <div>
+            <div style="font-size:11px;color:#64748B;margin-bottom:4px">TITAN SCORE</div>
+            <div style="font-size:56px;font-weight:900;color:${scoreColor(r.titanScore)};line-height:1">${r.titanScore}</div>
+          </div>
+          <div style="flex:1">
+            <div style="height:8px;background:#1E293B;border-radius:4px;overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;width:${r.titanScore}%;background:${scoreColor(r.titanScore)};border-radius:4px"></div>
+            </div>
+            <div style="font-size:12px;color:#64748B">${r.titanScore>=75?'Strong signal - investigate now':r.titanScore>=55?'Moderate signal - watch closely':r.titanScore>=35?'Early signal - monitor':' Weak signal'}</div>
+          </div>
+        </div>
+        <h3>Signal Breakdown</h3>
+        ${sigRows.map(s=>`
+          <div class="sig-row">
+            <div class="sig-icon" style="background:${s.bg};color:${s.color}">${s.icon}</div>
+            <div class="sig-detail">
+              <div class="sig-title">${s.label} <span style="color:#475569;font-weight:400;font-size:11px">(weight: ${s.weight}%)</span></div>
+              <div class="sig-desc">${s.desc}</div>
+            </div>
+            <div class="sig-weight" style="color:${scoreColor(s.score)}">${s.score}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  if (detailTabActive === 'metrics') {
+    body.innerHTML = `
+      <div class="detail-section">
+        <h3>Price Data</h3>
+        <div class="detail-metric"><span class="dm-label">Current Price</span><span class="dm-value">$${r.price?.toFixed(2)||'--'}</span></div>
+        <div class="detail-metric"><span class="dm-label">Today Change</span><span class="dm-value ${r.change>=0?'pos':'neg'}">${r.change>=0?'+':''}${r.change?.toFixed(2)||'--'}%</span></div>
+        <div class="detail-metric"><span class="dm-label">52-Week Low</span><span class="dm-value">$${r.reversalSig?.low52||'--'}</span></div>
+        <div class="detail-metric"><span class="dm-label">52-Week High</span><span class="dm-value">$${r.reversalSig?.high52||'--'}</span></div>
+        <div class="detail-metric"><span class="dm-label">Position in Range</span><span class="dm-value">${r.reversalSig?.posInRange||'--'}%</span></div>
+      </div>
+      <div class="detail-section">
+        <h3>Insider Activity (90 days)</h3>
+        <div class="detail-metric"><span class="dm-label">Unique Buyers</span><span class="dm-value" style="color:#F87171">${r.insiderSig?.buyers||0}</span></div>
+        <div class="detail-metric"><span class="dm-label">Sellers</span><span class="dm-value">${r.insiderSig?.sells||0}</span></div>
+        <div class="detail-metric"><span class="dm-label">Total Buy Value</span><span class="dm-value">$${r.insiderSig?.totalBuyValue>0?Number(r.insiderSig.totalBuyValue).toLocaleString():'--'}</span></div>
+      </div>
+      <div class="detail-section">
+        <h3>Analyst Consensus</h3>
+        <div class="detail-metric"><span class="dm-label">Strong Buy</span><span class="dm-value" style="color:#4ADE80">${r.analystSig?.strongBuy||0}</span></div>
+        <div class="detail-metric"><span class="dm-label">Buy</span><span class="dm-value" style="color:#86EFAC">${r.analystSig?.buy||0}</span></div>
+        <div class="detail-metric"><span class="dm-label">Hold</span><span class="dm-value" style="color:#FBBF24">${r.analystSig?.hold||0}</span></div>
+        <div class="detail-metric"><span class="dm-label">Sell / Strong Sell</span><span class="dm-value" style="color:#F87171">${(r.analystSig?.sell||0)+(r.analystSig?.strongSell||0)}</span></div>
+        <div class="detail-metric"><span class="dm-label">Total Coverage</span><span class="dm-value">${r.analystSig?.total||0} analysts</span></div>
+      </div>`;
+  }
+
+  if (detailTabActive === 'ai') {
+    body.innerHTML = `
+      <div class="detail-section">
+        <h3>AI Narrative</h3>
+        <div class="ai-box">
+          <div class="ai-label">Atlas AI Analysis</div>
+          <div class="ai-loading" id="ai-loading">
+            <div class="spinner" style="border-color:#1E3A5F;border-top-color:#3B82F6"></div>
+            Generating analysis...
+          </div>
+          <div class="ai-text" id="ai-text" style="display:none"></div>
+        </div>
+      </div>`;
+    generateAINarrative(r);
+  }
+}
+
+async function generateAINarrative(r) {
+  const prompt = `You are Titan, an early-signal stock intelligence engine. Analyze this stock briefly.
+
+Stock: ${r.ticker} (${r.name}) - ${r.sector}
+Titan Score: ${r.titanScore}/100
+Price: $${r.price} (${r.change>=0?'+':''}${r.change?.toFixed(2)}% today)
+Position in 52-week range: ${r.reversalSig?.posInRange}%
+Insider buyers (90d): ${r.insiderSig?.buyers}
+Analyst consensus score: ${r.analystSig?.score}
+Signals firing: ${r.signals.map(s=>s.label).join(', ')||'None'}
+
+In 3-4 sentences: Why might this stock be ready to move in the next 4-12 weeks? What is the key risk? What would confirm the thesis?
+Be direct and specific. No disclaimers.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await res.json();
+    const text = d.content?.find(b => b.type==='text')?.text || 'Unable to generate analysis.';
+    document.getElementById('ai-loading').style.display = 'none';
+    const aiText = document.getElementById('ai-text');
+    if (aiText) { aiText.style.display='block'; aiText.textContent=text; }
+  } catch(e) {
+    document.getElementById('ai-loading').style.display = 'none';
+    const aiText = document.getElementById('ai-text');
+    if (aiText) { aiText.style.display='block'; aiText.textContent='Error generating analysis. Check API key.'; }
+  }
+}
+
+function setDetailTab(tab) {
+  detailTabActive = tab;
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const r = results.find(x => x.ticker===detailTicker);
+  if (r) renderDetailBody(r);
+}
+
+function closeDetail(e) {
+  if (e && e.target !== document.getElementById('detail-overlay')) return;
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+
+// ── Watchlist ─────────────────────────────────────────────────────────────────
+function toggleWatchlist(ticker) {
+  const idx = watchlist.indexOf(ticker);
+  if (idx >= 0) watchlist.splice(idx, 1);
+  else watchlist.push(ticker);
+  localStorage.setItem('titan_wl', JSON.stringify(watchlist));
+  applyFilter(activeFilter);
+  renderScanner();
+  toast(idx >= 0 ? `${ticker} removed from watchlist` : `${ticker} added to watchlist`);
+}
+
+// ── Views ─────────────────────────────────────────────────────────────────────
+function setView(view) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (view === 'scanner') { renderScanner(); return; }
+
+  if (view === 'alerts') {
+    document.getElementById('main-content').innerHTML = `
+      <div class="header"><div class="header-left"><h1>Alerts</h1><p>Names that crossed Titan Score 70</p></div></div>
+      ${alerts.length === 0 ? '<div class="empty"><div class="empty-icon">!</div><div class="empty-title">No alerts yet</div><div class="empty-sub">Run a scan to detect high-signal opportunities.</div></div>' :
+        '<div class="table-wrap"><table><thead><tr><th>Ticker</th><th>Score</th><th>Date</th></tr></thead><tbody>' +
+        alerts.map(a=>`<tr><td style="font-weight:700">${a.ticker}</td><td style="color:${scoreColor(a.score)};font-weight:700">${a.score}</td><td style="color:#64748B">${new Date(a.date).toLocaleString()}</td></tr>`).join('') +
+        '</tbody></table></div>'}`;
+    return;
+  }
+
+  if (view === 'watchlist') {
+    const wlResults = results.filter(r => watchlist.includes(r.ticker));
+    document.getElementById('main-content').innerHTML = `
+      <div class="header"><div class="header-left"><h1>Watchlist</h1><p>${watchlist.length} stocks tracked</p></div></div>
+      ${watchlist.length === 0 ? '<div class="empty"><div class="empty-icon">W</div><div class="empty-title">Watchlist empty</div><div class="empty-sub">Click + Watch on any stock in the scanner to track it here.</div></div>' :
+        '<div class="table-wrap"><table><thead><tr><th>Titan Score</th><th>Ticker</th><th>Sector</th><th class="right">Price</th><th class="right">Change</th><th>Signals</th></tr></thead><tbody>' +
+        watchlist.map(ticker => {
+          const r = wlResults.find(x=>x.ticker===ticker);
+          if (!r) return `<tr><td colspan="6" style="color:#64748B">${ticker} — run scan for data</td></tr>`;
+          return `<tr onclick="openDetail('${r.ticker}')">
+            <td><div class="score-cell"><div class="score-num" style="color:${scoreColor(r.titanScore)}">${r.titanScore}</div><div class="score-bar-wrap"><div class="score-bar" style="width:${r.titanScore}%;background:${scoreColor(r.titanScore)}"></div></div></div></td>
+            <td><div class="ticker-sym">${r.ticker}</div></td>
+            <td><span class="sector-tag">${r.sector}</span></td>
+            <td class="right">$${r.price?.toFixed(2)||'--'}</td>
+            <td class="right ${r.change>=0?'pos':r.change<0?'neg':'neu'}">${r.change!=null?(r.change>=0?'+':'')+r.change.toFixed(2)+'%':'--'}</td>
+            <td><div class="signals">${r.signals.map(s=>`<span class="sig sig-${s.type}">${s.label}</span>`).join('')}</div></td>
+          </tr>`;
+        }).join('') +
+        '</tbody></table></div>'}`;
+    return;
+  }
+
+  if (view === 'settings') {
+    document.getElementById('main-content').innerHTML = `
+      <div class="header"><div class="header-left"><h1>Settings</h1></div></div>
+      <div style="max-width:500px">
+        <div style="background:#0D1526;border:1px solid #1E293B;border-radius:16px;padding:24px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px">API Keys</div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;color:#94A3B8;display:block;margin-bottom:6px">Finnhub API Key</label>
+            <input type="password" value="${getKey('finnhub')}" onchange="saveKey('finnhub',this.value)" style="width:100%;padding:10px 14px;background:#111827;border:1px solid #1E293B;border-radius:10px;color:#E2E8F0;font-size:13px;font-family:monospace">
+            <div style="font-size:11px;color:#475569;margin-top:4px">Free at finnhub.io — powers price data, insider buying, analyst consensus</div>
+          </div>
+          <div>
+            <label style="font-size:12px;color:#94A3B8;display:block;margin-bottom:6px">Unusual Whales API Key</label>
+            <input type="password" value="${getKey('uw')}" onchange="saveKey('uw',this.value)" style="width:100%;padding:10px 14px;background:#111827;border:1px solid #1E293B;border-radius:10px;color:#E2E8F0;font-size:13px;font-family:monospace">
+            <div style="font-size:11px;color:#475569;margin-top:4px">$100/month — powers options flow signal (highest alpha signal)</div>
+          </div>
+        </div>
+        <div style="background:#0D1526;border:1px solid #1E293B;border-radius:16px;padding:24px">
+          <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px">Signal Weights</div>
+          ${Object.entries(WEIGHTS).map(([k,v])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:13px;color:#94A3B8;text-transform:capitalize">${k}</span>
+              <span style="font-size:15px;font-weight:700;color:#F1F5F9">${v}%</span>
+            </div>`).join('')}
+          <div style="font-size:11px;color:#475569;margin-top:8px">Weights are fixed in v0.1 — customizable in v0.2</div>
+        </div>
+      </div>`;
+    return;
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function() {
+  const fk = getKey('finnhub');
+  if (fk) document.getElementById('finnhub-key').value = fk;
+  const uk = getKey('uw');
+  if (uk) document.getElementById('uw-key').value = uk;
+  renderScanner();
+})();
+</script>
+</body>
+</html>
