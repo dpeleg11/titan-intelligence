@@ -6,144 +6,144 @@
 <title>Titan — Early Signal Engine</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Inter', system-ui, sans-serif; background:#0A0F1E; color:#E2E8F0; min-height:100vh; }
+  body { font-family: 'Inter', system-ui, sans-serif; background:#F8FAFC; color:#1E293B; min-height:100vh; }
 
   /* Layout */
   .app { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
-  .sidebar { background:#0D1526; border-right:1px solid #1E293B; padding:24px 16px; display:flex; flex-direction:column; gap:8px; }
+  .sidebar { background:#FFFFFF; border-right:1px solid #E2E8F0; padding:24px 16px; display:flex; flex-direction:column; gap:8px; }
   .main { padding:24px; overflow-y:auto; }
 
   /* Logo */
-  .logo { font-size:22px; font-weight:900; color:#3B82F6; letter-spacing:-0.05em; margin-bottom:24px; padding:0 8px; }
+  .logo { font-size:22px; font-weight:900; color:#1D4ED8; letter-spacing:-0.05em; margin-bottom:24px; padding:0 8px; }
   .logo span { color:#64748B; font-size:11px; font-weight:500; display:block; letter-spacing:0.05em; margin-top:2px; }
 
   /* Nav */
   .nav-item { padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:500; color:#64748B; display:flex; align-items:center; gap:10px; transition:all 0.15s; border:none; background:none; width:100%; text-align:left; }
-  .nav-item:hover { background:#1E293B; color:#CBD5E1; }
-  .nav-item.active { background:#1E3A5F; color:#60A5FA; }
+  .nav-item:hover { background:#E2E8F0; color:#334155; }
+  .nav-item.active { background:#DBEAFE; color:#60A5FA; }
   .nav-item .icon { width:16px; text-align:center; }
 
   /* Settings panel */
-  .settings-block { margin-top:auto; padding:12px; background:#1E293B; border-radius:12px; }
+  .settings-block { margin-top:auto; padding:12px; background:#E2E8F0; border-radius:12px; }
   .settings-block label { font-size:10px; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px; }
-  .settings-block input { width:100%; padding:7px 10px; background:#0D1526; border:1px solid #334155; border-radius:8px; color:#E2E8F0; font-size:11px; font-family:monospace; }
-  .settings-block input:focus { outline:none; border-color:#3B82F6; }
+  .settings-block input { width:100%; padding:7px 10px; background:#FFFFFF; border:1px solid #334155; border-radius:8px; color:#1E293B; font-size:11px; font-family:monospace; }
+  .settings-block input:focus { outline:none; border-color:#1D4ED8; }
 
   /* Header */
   .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
-  .header-left h1 { font-size:22px; font-weight:800; color:#F1F5F9; }
+  .header-left h1 { font-size:22px; font-weight:800; color:#0F172A; }
   .header-left p { font-size:12px; color:#64748B; margin-top:3px; }
   .scan-btn { padding:10px 20px; background:#3B82F6; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all 0.15s; }
   .scan-btn:hover { background:#2563EB; }
-  .scan-btn:disabled { background:#1E3A5F; color:#64748B; cursor:not-allowed; }
+  .scan-btn:disabled { background:#DBEAFE; color:#64748B; cursor:not-allowed; }
   .scan-btn .spinner { width:14px; height:14px; border:2px solid #ffffff40; border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
   /* Stats row */
   .stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
-  .stat-card { background:#0D1526; border:1px solid #1E293B; border-radius:12px; padding:14px 16px; }
+  .stat-card { background:#FFFFFF; border:1px solid #E2E8F0; border-radius:12px; padding:14px 16px; }
   .stat-card .label { font-size:10px; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
-  .stat-card .value { font-size:24px; font-weight:900; color:#F1F5F9; }
+  .stat-card .value { font-size:24px; font-weight:900; color:#0F172A; }
   .stat-card .sub { font-size:11px; color:#64748B; margin-top:3px; }
 
   /* Filters */
   .filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
-  .filter-btn { padding:5px 14px; border-radius:20px; border:1px solid #1E293B; background:none; color:#64748B; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; }
-  .filter-btn:hover { border-color:#3B82F6; color:#60A5FA; }
-  .filter-btn.active { background:#1E3A5F; border-color:#3B82F6; color:#60A5FA; }
-  .search-box { padding:6px 12px; background:#0D1526; border:1px solid #1E293B; border-radius:20px; color:#E2E8F0; font-size:12px; width:180px; }
-  .search-box:focus { outline:none; border-color:#3B82F6; }
+  .filter-btn { padding:5px 14px; border-radius:20px; border:1px solid #E2E8F0; background:none; color:#64748B; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .filter-btn:hover { border-color:#1D4ED8; color:#60A5FA; }
+  .filter-btn.active { background:#DBEAFE; border-color:#1D4ED8; color:#60A5FA; }
+  .search-box { padding:6px 12px; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:20px; color:#1E293B; font-size:12px; width:180px; }
+  .search-box:focus { outline:none; border-color:#1D4ED8; }
   .filter-spacer { flex:1; }
 
   /* Table */
-  .table-wrap { background:#0D1526; border:1px solid #1E293B; border-radius:16px; overflow:hidden; }
+  .table-wrap { background:#FFFFFF; border:1px solid #E2E8F0; border-radius:16px; overflow:hidden; }
   table { width:100%; border-collapse:collapse; }
-  thead tr { background:#111827; }
-  th { padding:12px 16px; text-align:left; font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  thead tr { background:#F1F5F9; }
+  th { padding:12px 16px; text-align:left; font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
   th.right { text-align:right; }
-  td { padding:12px 16px; font-size:13px; border-bottom:1px solid #1E293B; }
+  td { padding:12px 16px; font-size:13px; border-bottom:1px solid #E2E8F0; }
   tr:last-child td { border-bottom:none; }
-  tr:hover td { background:#111827; cursor:pointer; }
+  tr:hover td { background:#F1F5F9; cursor:pointer; }
 
   /* Score bar */
   .score-cell { display:flex; align-items:center; gap:10px; }
   .score-num { font-size:18px; font-weight:900; width:32px; text-align:right; flex-shrink:0; }
-  .score-bar-wrap { flex:1; height:6px; background:#1E293B; border-radius:3px; overflow:hidden; min-width:80px; }
+  .score-bar-wrap { flex:1; height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; min-width:80px; }
   .score-bar { height:100%; border-radius:3px; transition:width 0.5s ease; }
 
   /* Signal badges */
   .signals { display:flex; gap:4px; flex-wrap:wrap; }
   .sig { padding:2px 7px; border-radius:10px; font-size:10px; font-weight:700; white-space:nowrap; }
-  .sig-quant { background:#1E3A5F; color:#60A5FA; }
-  .sig-options { background:#1A2E1A; color:#4ADE80; }
-  .sig-insider { background:#2D1B1B; color:#F87171; }
-  .sig-analyst { background:#2D2A1B; color:#FBBF24; }
-  .sig-reversal { background:#1E1B2E; color:#A78BFA; }
+  .sig-quant { background:#DBEAFE; color:#60A5FA; }
+  .sig-options { background:#DCFCE7; color:#15803D; }
+  .sig-insider { background:#FEE2E2; color:#F87171; }
+  .sig-analyst { background:#FEF3C7; color:#FBBF24; }
+  .sig-reversal { background:#EDE9FE; color:#A78BFA; }
 
   /* Ticker cell */
   .ticker-cell { display:flex; flex-direction:column; }
-  .ticker-sym { font-size:15px; font-weight:800; color:#F1F5F9; }
+  .ticker-sym { font-size:15px; font-weight:800; color:#0F172A; }
   .ticker-name { font-size:11px; color:#64748B; margin-top:1px; }
 
   /* Change */
-  .pos { color:#4ADE80; }
+  .pos { color:#15803D; }
   .neg { color:#F87171; }
-  .neu { color:#94A3B8; }
+  .neu { color:#64748B; }
 
   /* Detail panel */
   .detail-overlay { position:fixed; inset:0; background:#000000AA; z-index:100; display:none; }
   .detail-overlay.open { display:block; }
-  .detail-panel { position:fixed; right:0; top:0; height:100%; width:480px; background:#0D1526; border-left:1px solid #1E293B; padding:0; overflow-y:auto; transform:translateX(100%); transition:transform 0.25s ease; }
+  .detail-panel { position:fixed; right:0; top:0; height:100%; width:480px; background:#FFFFFF; border-left:1px solid #E2E8F0; padding:0; overflow-y:auto; transform:translateX(100%); transition:transform 0.25s ease; }
   .detail-overlay.open .detail-panel { transform:translateX(0); }
-  .detail-header { padding:24px; border-bottom:1px solid #1E293B; display:flex; justify-content:space-between; align-items:start; }
+  .detail-header { padding:24px; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:start; }
   .detail-close { background:none; border:none; color:#64748B; font-size:20px; cursor:pointer; padding:4px; }
-  .detail-close:hover { color:#F1F5F9; }
+  .detail-close:hover { color:#0F172A; }
   .detail-body { padding:24px; }
   .detail-section { margin-bottom:20px; }
-  .detail-section h3 { font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; }
-  .detail-metric { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #1E293B; }
+  .detail-section h3 { font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; }
+  .detail-metric { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #E2E8F0; }
   .detail-metric:last-child { border:none; }
-  .detail-metric .dm-label { font-size:12px; color:#94A3B8; }
-  .detail-metric .dm-value { font-size:13px; font-weight:700; color:#F1F5F9; }
+  .detail-metric .dm-label { font-size:12px; color:#64748B; }
+  .detail-metric .dm-value { font-size:13px; font-weight:700; color:#0F172A; }
 
   /* AI narrative */
-  .ai-box { background:#111827; border:1px solid #1E3A5F; border-radius:12px; padding:16px; }
-  .ai-box .ai-label { font-size:10px; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px; }
-  .ai-box .ai-text { font-size:13px; color:#CBD5E1; line-height:1.7; }
+  .ai-box { background:#F1F5F9; border:1px solid #1E3A5F; border-radius:12px; padding:16px; }
+  .ai-box .ai-label { font-size:10px; font-weight:700; color:#1D4ED8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px; }
+  .ai-box .ai-text { font-size:13px; color:#334155; line-height:1.7; }
   .ai-box .ai-loading { color:#64748B; font-size:13px; display:flex; align-items:center; gap:8px; }
 
   /* Signal detail rows */
-  .sig-row { display:flex; align-items:start; gap:12px; padding:10px 0; border-bottom:1px solid #1E293B; }
+  .sig-row { display:flex; align-items:start; gap:12px; padding:10px 0; border-bottom:1px solid #E2E8F0; }
   .sig-row:last-child { border:none; }
   .sig-icon { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
   .sig-detail { flex:1; }
-  .sig-title { font-size:12px; font-weight:700; color:#F1F5F9; }
+  .sig-title { font-size:12px; font-weight:700; color:#0F172A; }
   .sig-desc { font-size:11px; color:#64748B; margin-top:2px; line-height:1.5; }
   .sig-weight { font-size:12px; font-weight:800; }
 
   /* Empty state */
-  .empty { text-align:center; padding:80px 40px; color:#475569; }
+  .empty { text-align:center; padding:80px 40px; color:#64748B; }
   .empty-icon { font-size:48px; margin-bottom:16px; }
   .empty-title { font-size:18px; font-weight:700; color:#64748B; margin-bottom:8px; }
   .empty-sub { font-size:13px; line-height:1.6; }
 
   /* Toast */
-  .toast { position:fixed; bottom:24px; right:24px; background:#1E293B; color:#F1F5F9; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:999; border:1px solid #334155; opacity:0; transition:opacity 0.3s; }
+  .toast { position:fixed; bottom:24px; right:24px; background:#E2E8F0; color:#0F172A; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:999; border:1px solid #334155; opacity:0; transition:opacity 0.3s; }
   .toast.show { opacity:1; }
 
   /* Tabs inside detail */
   .detail-tabs { display:flex; gap:4px; padding:16px 24px 0; }
   .detail-tab { padding:7px 16px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:none; background:none; color:#64748B; }
-  .detail-tab.active { background:#1E3A5F; color:#60A5FA; }
+  .detail-tab.active { background:#DBEAFE; color:#60A5FA; }
 
   /* Sector tag */
-  .sector-tag { font-size:10px; color:#64748B; background:#1E293B; padding:2px 8px; border-radius:10px; }
+  .sector-tag { font-size:10px; color:#64748B; background:#E2E8F0; padding:2px 8px; border-radius:10px; }
 
   /* Last scan */
-  .last-scan { font-size:11px; color:#475569; }
+  .last-scan { font-size:11px; color:#64748B; }
 
   /* Alert strip */
-  .alert-strip { background:#1A2E1A; border:1px solid #166534; border-radius:10px; padding:10px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; font-size:12px; color:#4ADE80; display:none; }
+  .alert-strip { background:#DCFCE7; border:1px solid #166534; border-radius:10px; padding:10px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; font-size:12px; color:#15803D; display:none; }
   .alert-strip.show { display:flex; }
 </style>
 </head>
@@ -169,9 +169,11 @@
 
     <div class="settings-block">
       <label>Finnhub API Key</label>
-      <input type="password" id="finnhub-key" placeholder="Enter key..." onchange="saveKey('finnhub', this.value)">
+      <input type="password" id="finnhub-key" placeholder="Enter key..." oninput="saveKey('finnhub', this.value)">
+      <button onclick="testFinnhub()" style="margin-top:6px;width:100%;padding:5px;background:#DBEAFE;color:#60A5FA;border:none;border-radius:6px;font-size:11px;cursor:pointer">Test Connection</button>
+      <div id="fh-status" style="font-size:10px;margin-top:4px;color:#64748B"></div>
       <label style="margin-top:10px">Unusual Whales Key</label>
-      <input type="password" id="uw-key" placeholder="Coming soon..." onchange="saveKey('uw', this.value)">
+      <input type="password" id="uw-key" placeholder="Pending..." oninput="saveKey('uw', this.value)">
     </div>
   </div>
 
@@ -291,14 +293,55 @@ const WEIGHTS = { quant:30, options:20, insider:20, analyst:15, reversal:15 };
 function getKey(k) { return localStorage.getItem('titan_key_'+k)||''; }
 function saveKey(k,v) { localStorage.setItem('titan_key_'+k,v); toast('Key saved'); }
 
+async function testSingleStock() {
+  const key = getKey('finnhub');
+  console.log('Key length:', key.length, 'Key preview:', key.substring(0,8)+'...');
+  const q = await getQuote('NVDA');
+  console.log('NVDA quote:', q);
+  if (q && q.c > 0) {
+    toast('NVDA: $'+q.c.toFixed(2)+' - API working!');
+  } else {
+    toast('NVDA returned no data - check console');
+  }
+}
+
+
+async function testFinnhub() {
+  const el = document.getElementById('fh-status');
+  if (el) el.textContent = 'Testing...';
+  const key = getKey('finnhub');
+  if (!key) { if(el) { el.textContent = 'No key saved'; el.style.color='#F87171'; } return; }
+  try {
+    const r = await fetch(`/fh?endpoint=${encodeURIComponent('quote?symbol=NVDA')}&token=${key}`);
+    const d = await r.json();
+    if (d.c && d.c > 0) {
+      if (el) { el.textContent = 'Connected - NVDA $'+d.c.toFixed(2); el.style.color='#4ADE80'; }
+    } else {
+      if (el) { el.textContent = 'Invalid key or rate limit'; el.style.color='#F87171'; }
+    }
+  } catch(e) {
+    if (el) { el.textContent = 'Error: '+e.message; el.style.color='#F87171'; }
+  }
+}
+
+
 async function finnhub(endpoint) {
   const key = getKey('finnhub');
-  if (!key) return null;
+  if (!key) { console.error('NO KEY'); return null; }
   try {
-    const r = await fetch(`https://finnhub.io/api/v1/${endpoint}&token=${key}`);
-    if (!r.ok) return null;
-    return await r.json();
-  } catch(e) { return null; }
+    // Use Cloudflare Pages Function proxy to avoid CORS
+    const url = `/fh?endpoint=${encodeURIComponent(endpoint)}&token=${key}`;
+    const r = await fetch(url);
+    if (!r.ok) {
+      console.warn('Proxy error', r.status, endpoint);
+      return null;
+    }
+    const d = await r.json();
+    return d;
+  } catch(e) {
+    console.error('Proxy fetch error:', e.message, endpoint);
+    return null;
+  }
 }
 
 async function getQuote(ticker) {
@@ -421,20 +464,19 @@ async function runScan() {
   const status = document.getElementById('scan-status');
 
   // Scan in batches of 3 to respect rate limits
-  for (let i = 0; i < UNIVERSE.length; i += 3) {
-    const batch = UNIVERSE.slice(i, i+3);
-    if (status) status.textContent = `Scanning ${i+1}-${Math.min(i+3,UNIVERSE.length)} of ${UNIVERSE.length}...`;
+  for (let i = 0; i < UNIVERSE.length; i += 2) {
+    const batch = UNIVERSE.slice(i, i+2);
+    if (status) status.textContent = `Scanning ${i+1}-${Math.min(i+2,UNIVERSE.length)} of ${UNIVERSE.length}... (${results.length} found)`;
 
     await Promise.all(batch.map(async stock => {
       try {
-        const [quote, candles, insider, recs] = await Promise.all([
-          getQuote(stock.ticker),
+        const quote = await getQuote(stock.ticker);
+        if (!quote || !quote.c || quote.c <= 0) return;
+        const [candles, insider, recs] = await Promise.all([
           getCandles(stock.ticker),
           getInsider(stock.ticker),
           getRecommendations(stock.ticker),
         ]);
-
-        if (!quote || !quote.c) return;
 
         const reversalSig  = scoreReversal(candles);
         const insiderSig   = scoreInsider(insider);
@@ -473,11 +515,11 @@ async function runScan() {
           reversalSig,
           scannedAt: new Date().toISOString(),
         });
-      } catch(e) { /* skip failed tickers */ }
+      } catch(e) { console.warn(stock.ticker, e.message); }
     }));
 
     // Rate limit pause
-    if (i + 3 < UNIVERSE.length) await new Promise(r => setTimeout(r, 300));
+    if (i + 3 < UNIVERSE.length) await new Promise(r => setTimeout(r, 500));
   }
 
   results.sort((a,b) => b.titanScore - a.titanScore);
@@ -489,9 +531,11 @@ async function runScan() {
   newAlerts.forEach(r => alerts.unshift({ticker:r.ticker, score:r.titanScore, date:new Date().toISOString()}));
   localStorage.setItem('titan_alerts', JSON.stringify(alerts.slice(0,50)));
 
-  applyFilter(activeFilter);
+  console.log('Scan complete, results:', results.length);
+  filtered = [...results]; // show all by default
+  activeFilter = 'all';
   renderScanner();
-  toast(`Scan complete — ${results.length} stocks analyzed`);
+  toast(`Scan complete -- ${results.length} stocks analyzed`);
 }
 
 // ── Filter & Render ───────────────────────────────────────────────────────────
@@ -528,6 +572,7 @@ function renderScanner() {
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="scan-status" style="font-size:12px;color:#64748B"></span>
+        <button onclick="testSingleStock()" style="padding:10px 16px;background:#E2E8F0;color:#1E293B;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Test NVDA</button>
         <button class="scan-btn" id="scan-btn" onclick="runScan()">
           ${scanning ? '<div class="spinner"></div> Scanning...' : 'Run Scan'}
         </button>
@@ -547,7 +592,7 @@ function renderScanner() {
       </div>
       <div class="stat-card">
         <div class="label">High Signal</div>
-        <div class="value" style="color:#4ADE80">${results.filter(r=>r.titanScore>=70).length}</div>
+        <div class="value" style="color:#15803D">${results.filter(r=>r.titanScore>=70).length}</div>
         <div class="sub">score above 70</div>
       </div>
       <div class="stat-card">
@@ -623,7 +668,7 @@ function renderScanner() {
             <td>
               <div class="signals">
                 ${r.signals.map(s=>`<span class="sig sig-${s.type}">${s.label}</span>`).join('')}
-                ${r.signals.length===0?'<span style="color:#475569;font-size:11px">No signals</span>':''}
+                ${r.signals.length===0?'<span style="color:#64748B;font-size:11px">No signals</span>':''}
               </div>
             </td>
             <td class="right" style="color:${r.insiderSig?.buyers>0?'#F87171':'#475569'}">${r.insiderSig?.buyers>0?r.insiderSig.buyers+' buyer'+( r.insiderSig.buyers>1?'s':''):'--'}</td>
@@ -702,7 +747,7 @@ function renderDetailBody(r) {
             <div style="font-size:56px;font-weight:900;color:${scoreColor(r.titanScore)};line-height:1">${r.titanScore}</div>
           </div>
           <div style="flex:1">
-            <div style="height:8px;background:#1E293B;border-radius:4px;overflow:hidden;margin-bottom:8px">
+            <div style="height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;margin-bottom:8px">
               <div style="height:100%;width:${r.titanScore}%;background:${scoreColor(r.titanScore)};border-radius:4px"></div>
             </div>
             <div style="font-size:12px;color:#64748B">${r.titanScore>=75?'Strong signal - investigate now':r.titanScore>=55?'Moderate signal - watch closely':r.titanScore>=35?'Early signal - monitor':' Weak signal'}</div>
@@ -713,7 +758,7 @@ function renderDetailBody(r) {
           <div class="sig-row">
             <div class="sig-icon" style="background:${s.bg};color:${s.color}">${s.icon}</div>
             <div class="sig-detail">
-              <div class="sig-title">${s.label} <span style="color:#475569;font-weight:400;font-size:11px">(weight: ${s.weight}%)</span></div>
+              <div class="sig-title">${s.label} <span style="color:#64748B;font-weight:400;font-size:11px">(weight: ${s.weight}%)</span></div>
               <div class="sig-desc">${s.desc}</div>
             </div>
             <div class="sig-weight" style="color:${scoreColor(s.score)}">${s.score}</div>
@@ -739,7 +784,7 @@ function renderDetailBody(r) {
       </div>
       <div class="detail-section">
         <h3>Analyst Consensus</h3>
-        <div class="detail-metric"><span class="dm-label">Strong Buy</span><span class="dm-value" style="color:#4ADE80">${r.analystSig?.strongBuy||0}</span></div>
+        <div class="detail-metric"><span class="dm-label">Strong Buy</span><span class="dm-value" style="color:#15803D">${r.analystSig?.strongBuy||0}</span></div>
         <div class="detail-metric"><span class="dm-label">Buy</span><span class="dm-value" style="color:#86EFAC">${r.analystSig?.buy||0}</span></div>
         <div class="detail-metric"><span class="dm-label">Hold</span><span class="dm-value" style="color:#FBBF24">${r.analystSig?.hold||0}</span></div>
         <div class="detail-metric"><span class="dm-label">Sell / Strong Sell</span><span class="dm-value" style="color:#F87171">${(r.analystSig?.sell||0)+(r.analystSig?.strongSell||0)}</span></div>
@@ -754,7 +799,7 @@ function renderDetailBody(r) {
         <div class="ai-box">
           <div class="ai-label">Atlas AI Analysis</div>
           <div class="ai-loading" id="ai-loading">
-            <div class="spinner" style="border-color:#1E3A5F;border-top-color:#3B82F6"></div>
+            <div class="spinner" style="border-color:#1E3A5F;border-top-color:#1D4ED8"></div>
             Generating analysis...
           </div>
           <div class="ai-text" id="ai-text" style="display:none"></div>
@@ -867,27 +912,27 @@ function setView(view) {
     document.getElementById('main-content').innerHTML = `
       <div class="header"><div class="header-left"><h1>Settings</h1></div></div>
       <div style="max-width:500px">
-        <div style="background:#0D1526;border:1px solid #1E293B;border-radius:16px;padding:24px;margin-bottom:16px">
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:24px;margin-bottom:16px">
           <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px">API Keys</div>
           <div style="margin-bottom:14px">
-            <label style="font-size:12px;color:#94A3B8;display:block;margin-bottom:6px">Finnhub API Key</label>
-            <input type="password" value="${getKey('finnhub')}" onchange="saveKey('finnhub',this.value)" style="width:100%;padding:10px 14px;background:#111827;border:1px solid #1E293B;border-radius:10px;color:#E2E8F0;font-size:13px;font-family:monospace">
-            <div style="font-size:11px;color:#475569;margin-top:4px">Free at finnhub.io — powers price data, insider buying, analyst consensus</div>
+            <label style="font-size:12px;color:#64748B;display:block;margin-bottom:6px">Finnhub API Key</label>
+            <input type="password" value="${getKey('finnhub')}" onchange="saveKey('finnhub',this.value)" style="width:100%;padding:10px 14px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;color:#1E293B;font-size:13px;font-family:monospace">
+            <div style="font-size:11px;color:#64748B;margin-top:4px">Free at finnhub.io — powers price data, insider buying, analyst consensus</div>
           </div>
           <div>
-            <label style="font-size:12px;color:#94A3B8;display:block;margin-bottom:6px">Unusual Whales API Key</label>
-            <input type="password" value="${getKey('uw')}" onchange="saveKey('uw',this.value)" style="width:100%;padding:10px 14px;background:#111827;border:1px solid #1E293B;border-radius:10px;color:#E2E8F0;font-size:13px;font-family:monospace">
-            <div style="font-size:11px;color:#475569;margin-top:4px">$100/month — powers options flow signal (highest alpha signal)</div>
+            <label style="font-size:12px;color:#64748B;display:block;margin-bottom:6px">Unusual Whales API Key</label>
+            <input type="password" value="${getKey('uw')}" onchange="saveKey('uw',this.value)" style="width:100%;padding:10px 14px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;color:#1E293B;font-size:13px;font-family:monospace">
+            <div style="font-size:11px;color:#64748B;margin-top:4px">$100/month — powers options flow signal (highest alpha signal)</div>
           </div>
         </div>
-        <div style="background:#0D1526;border:1px solid #1E293B;border-radius:16px;padding:24px">
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:24px">
           <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px">Signal Weights</div>
           ${Object.entries(WEIGHTS).map(([k,v])=>`
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <span style="font-size:13px;color:#94A3B8;text-transform:capitalize">${k}</span>
-              <span style="font-size:15px;font-weight:700;color:#F1F5F9">${v}%</span>
+              <span style="font-size:13px;color:#64748B;text-transform:capitalize">${k}</span>
+              <span style="font-size:15px;font-weight:700;color:#0F172A">${v}%</span>
             </div>`).join('')}
-          <div style="font-size:11px;color:#475569;margin-top:8px">Weights are fixed in v0.1 — customizable in v0.2</div>
+          <div style="font-size:11px;color:#64748B;margin-top:8px">Weights are fixed in v0.1 — customizable in v0.2</div>
         </div>
       </div>`;
     return;
