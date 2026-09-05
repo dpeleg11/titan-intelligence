@@ -312,7 +312,7 @@ async function testFinnhub() {
   const key = getKey('finnhub');
   if (!key) { if(el) { el.textContent = 'No key saved'; el.style.color='#F87171'; } return; }
   try {
-    const r = await fetch(`/fh?endpoint=${encodeURIComponent('quote?symbol=NVDA')}&token=${key}`);
+    const r = await fetch(`/fh?path=quote&params=${encodeURIComponent('symbol=NVDA')}&token=${key}`);
     const d = await r.json();
     if (d.c && d.c > 0) {
       if (el) { el.textContent = 'Connected - NVDA $'+d.c.toFixed(2); el.style.color='#4ADE80'; }
@@ -330,7 +330,9 @@ async function finnhub(endpoint) {
   if (!key) { console.error('NO KEY'); return null; }
   try {
     // Use Cloudflare Pages Function proxy to avoid CORS
-    const url = `/fh?endpoint=${encodeURIComponent(endpoint)}&token=${key}`;
+    // Split endpoint at ? to pass cleanly
+    const [path, params] = endpoint.split('?');
+    const url = `/fh?path=${encodeURIComponent(path)}&params=${encodeURIComponent(params||'')}&token=${key}`;
     const r = await fetch(url);
     if (!r.ok) {
       console.warn('Proxy error', r.status, endpoint);
