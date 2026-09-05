@@ -1,8 +1,6 @@
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request } = context;
   const url = new URL(request.url);
-  const endpoint = url.searchParams.get('endpoint');
-  const key = url.searchParams.get('token');
   
   const cors = {
     'Access-Control-Allow-Origin': '*',
@@ -14,8 +12,19 @@ export async function onRequest(context) {
     return new Response(null, { status: 204, headers: cors });
   }
 
+  const path   = url.searchParams.get('path') || '';
+  const params = url.searchParams.get('params') || '';
+  const token  = url.searchParams.get('token') || '';
+
+  if (!path || !token) {
+    return new Response(JSON.stringify({error:'missing params'}), {
+      status: 400, headers: { ...cors, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
-    const r = await fetch(`https://finnhub.io/api/v1/${endpoint}&token=${key}`);
+    const finnhubUrl = `https://finnhub.io/api/v1/${path}?${params}&token=${token}`;
+    const r = await fetch(finnhubUrl);
     const data = await r.text();
     return new Response(data, {
       status: r.status,
